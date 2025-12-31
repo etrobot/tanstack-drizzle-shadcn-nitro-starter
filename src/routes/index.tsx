@@ -90,7 +90,7 @@ function Home() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
                 <a
-                  href="https://github.com/TanStack/router"
+                  href="https://github.com/etrobot/tanstack-drizzle-shadcn-nitro-starter"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex h-10 items-center justify-center rounded-full border border-[#121727]/20 dark:border-input bg-transparent dark:bg-background px-8 text-sm font-semibold shadow-sm transition-transform hover:scale-105 active:scale-95 hover:bg-black/5 dark:hover:bg-accent hover:text-black dark:hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-[#121727] dark:text-foreground"

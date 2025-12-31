@@ -1,4 +1,4 @@
-# TanStack Start Template
+# TanStack Drizzle Shadcn Nitro Starter
 
 A clean, production-ready full-stack React template built with TanStack Start, featuring type-safe routing, server functions, and dual database support.
 
