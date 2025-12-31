@@ -2,6 +2,9 @@
 
 A clean, production-ready full-stack React template built with TanStack Start, featuring type-safe routing, server functions, and dual database support.
 
+<img width="2658" height="1558" alt="image" src="https://github.com/user-attachments/assets/54dc70db-6e28-4e27-aaaa-0ec0b4ca8617" />
+
+
 ## ✨ Features
 
 - 🚀 **TanStack Start** - Full-stack React framework with SSR/SSG
@@ -256,7 +259,7 @@ You can customize the Nitro configuration in `nitro.config.ts` for route rules, 
 
 - [TanStack Start](https://tanstack.com/start) - Full-stack React framework
 - [TanStack Router](https://tanstack.com/router) - Type-safe routing
-- [Nitro](https://nitro.unjs.io/) - Universal server engine for deployment
+- [Nitro](https://nitro.build/) - Universal server engine for deployment
 - [Drizzle ORM](https://orm.drizzle.team/) - Database toolkit
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
 - [Radix UI](https://www.radix-ui.com/) - Accessible components
