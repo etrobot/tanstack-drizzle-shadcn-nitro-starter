@@ -216,6 +216,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 ### Cloudflare Workers
 
+This template uses **Nitro** as the server engine to deploy TanStack Start to Cloudflare Workers. Nitro automatically compiles your app into the optimized Worker format using the `cloudflare_module` preset configured in `nitro.config.ts`.
+
 ```bash
 # Login to Cloudflare
 wrangler login
@@ -227,6 +229,13 @@ pnpm cf:deploy
 ```
 
 Your app will be live on Cloudflare's global edge network!
+
+**How it works:**
+- `pnpm build` → Vite builds the app with Nitro plugin
+- Nitro outputs optimized Cloudflare Worker code to `.output/`
+- `wrangler deploy` publishes the Worker to Cloudflare's edge
+
+You can customize the Nitro configuration in `nitro.config.ts` for route rules, caching, CORS, and more.
 
 ## 🛠️ Available Scripts
 
@@ -247,6 +256,7 @@ Your app will be live on Cloudflare's global edge network!
 
 - [TanStack Start](https://tanstack.com/start) - Full-stack React framework
 - [TanStack Router](https://tanstack.com/router) - Type-safe routing
+- [Nitro](https://nitro.unjs.io/) - Universal server engine for deployment
 - [Drizzle ORM](https://orm.drizzle.team/) - Database toolkit
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
 - [Radix UI](https://www.radix-ui.com/) - Accessible components
@@ -256,6 +266,7 @@ Your app will be live on Cloudflare's global edge network!
 
 - [TanStack Start Docs](https://tanstack.com/start)
 - [TanStack Router Docs](https://tanstack.com/router)
+- [Nitro Docs](https://nitro.unjs.io/) - Learn about deploy presets and configuration
 - [Drizzle ORM Docs](https://orm.drizzle.team/)
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
 
