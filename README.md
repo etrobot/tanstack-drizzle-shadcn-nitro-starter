@@ -3,6 +3,7 @@
 A clean, production-ready full-stack React template built with TanStack Start, featuring type-safe routing, server functions, and dual database support.
 
 <img width="2658" height="1558" alt="image" src="https://github.com/user-attachments/assets/54dc70db-6e28-4e27-aaaa-0ec0b4ca8617" />
+<img width="1237" height="833" alt="image" src="https://github.com/user-attachments/assets/0a663c6a-7639-4370-8cd1-f0fa76c6b1b1" />
 
 
 ## ✨ Features
