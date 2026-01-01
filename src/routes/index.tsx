@@ -107,23 +107,23 @@ function Home() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-5xl mx-auto w-full px-2">
           <FeatureCard
             icon={<LayoutTemplate className="w-6 h-6 text-[#C27664] dark:text-blue-500" />}
-            title="Type Guide"
+            title="TanStack Router"
             description="Type-safe routing built-in."
           />
           <FeatureCard
             icon={<Zap className="w-6 h-6 text-[#889C78] dark:text-yellow-500" />}
-            title="Fast Edge"
-            description="Deploy instantly to Cloudflare."
+            title="Nitro Server"
+            description="Fast edge deployment ready."
           />
           <FeatureCard
             icon={<Database className="w-6 h-6 text-[#121727] dark:text-emerald-500" />}
-            title="D1 Ready"
-            description="Serverless SQL support."
+            title="Drizzle ORM"
+            description="SQLite & D1 database."
           />
           <FeatureCard
             icon={<Code2 className="w-6 h-6 text-[#C27664] dark:text-purple-500" />}
-            title="Modern"
-            description="Tailwind & Radix UI included."
+            title="shadcn/ui"
+            description="Modern UI components."
           />
         </div>
 

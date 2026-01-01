@@ -45,7 +45,7 @@ export function ThemeToggle() {
   }
 
   const Icon = theme === 'dark' ? Sun : Moon
-  const label = theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'
+  const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
 
   return (
     <button
