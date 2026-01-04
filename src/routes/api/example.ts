@@ -87,6 +87,60 @@ export const createUser = createServerFn({ method: 'POST' })
   }
 )
 
+// PUT: Update a user
+export const updateUser = createServerFn({ method: 'POST' })
+  .inputValidator((data: { userId: string; name?: string; email?: string }) => data)
+  .handler(async ({ data }) => {
+    try {
+      if (!data.userId) {
+        return {
+          success: false,
+          error: 'User ID is required',
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      const db = await getDb()
+
+      // Check if user exists
+      const existingUser = await db.select().from(users).where(eq(users.id, data.userId))
+      if (existingUser.length === 0) {
+        return {
+          success: false,
+          error: 'User not found',
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      // Update user
+      await db.update(users)
+        .set({
+          name: data.name,
+          email: data.email,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, data.userId))
+
+      // Fetch updated user
+      const updatedUser = await db.select().from(users).where(eq(users.id, data.userId))
+
+      return {
+        success: true,
+        data: updatedUser[0],
+        message: 'User updated successfully!',
+        timestamp: new Date().toISOString(),
+      }
+    } catch (error) {
+      console.error('Database update error:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update user',
+        timestamp: new Date().toISOString(),
+      }
+    }
+  }
+)
+
 // DELETE: Delete a user by ID
 export const deleteUser = createServerFn({ method: 'POST' })
   .inputValidator((data: { userId: string }) => data)

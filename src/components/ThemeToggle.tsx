@@ -36,10 +36,6 @@ export function ThemeToggle() {
     window.localStorage.setItem(STORAGE_KEY, theme)
   }, [theme, mounted])
 
-  if (!mounted) {
-    return null
-  }
-
   const toggleTheme = () => {
     setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
   }
@@ -53,6 +49,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={label}
       className="inline-flex items-center justify-center rounded-full border border-border bg-card p-2 text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      style={{ opacity: mounted ? 1 : 0.5, pointerEvents: mounted ? 'auto' : 'none' }}
     >
       <Icon className="h-5 w-5" />
     </button>
