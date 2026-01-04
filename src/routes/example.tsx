@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getUsers, createUser, updateUser, deleteUser, type User } from './api/example'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,26 +22,33 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/example')({
+  loader: async () => {
+    // Load users data via the loader instead of client-side query
+    const response = await getUsers()
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch users')
+    }
+    return response
+  },
   component: ExamplePage,
 })
 
 function ExamplePage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  // Query: Fetch users
-  const { data, isPending, error } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await getUsers()
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch users')
-      }
-      return response
-    },
-  })
+  // Use the type-safe loader data from the route
+  const data = Route.useLoaderData()
+
+  // Helper function to refresh the route data
+  const refreshData = () => {
+    // Invalidate queries and navigate to refresh loader
+    queryClient.invalidateQueries()
+    navigate({ to: '/example', replace: true })
+  }
 
   // Mutation: Create user
   const createMutation = useMutation({
@@ -53,10 +60,11 @@ function ExamplePage() {
       return result
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User created successfully!')
       setName('')
       setEmail('')
+      // Refresh the data by reloading the route
+      refreshData()
     },
     onError: (error: Error) => {
       toast.error(error.message)
@@ -73,11 +81,12 @@ function ExamplePage() {
       return result
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User updated successfully!')
       setEditingUser(null)
       setName('')
       setEmail('')
+      // Refresh the data by reloading the route
+      refreshData()
     },
     onError: (error: Error) => {
       toast.error(error.message)
@@ -94,8 +103,9 @@ function ExamplePage() {
       return result
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User deleted successfully!')
+      // Refresh the data by reloading the route
+      refreshData()
     },
     onError: (error: Error) => {
       toast.error(error.message)
@@ -223,17 +233,7 @@ function ExamplePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isPending ? (
-              <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                <p className="mt-4 text-muted-foreground">Loading...</p>
-              </div>
-            ) : error ? (
-              <div className="p-4 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-lg">
-                <p className="font-medium">Error loading users</p>
-                <p className="text-sm mt-1">{error.message}</p>
-              </div>
-            ) : !data?.data || data.data.length === 0 ? (
+            {!data?.data || data.data.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p className="text-4xl mb-4">📭</p>
                 <p>No user data available</p>
