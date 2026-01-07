@@ -1,0 +1,33 @@
+# .dev.vars.example
+# 
+# Cloudflare Workers local development environment variables
+# Copy this file to .dev.vars and fill in your actual values
+# 
+# Note: .dev.vars is used by Wrangler for local development
+# This file simulates the environment bindings you'll have in production
+# 
+# DO NOT commit .dev.vars to git (it's in .gitignore)
+
+# Database credentials (if using remote libsql/Turso)
+LIBSQL_URL=libsql://your-database.turso.io
+LIBSQL_AUTH_TOKEN=your-auth-token-here
+
+# API Keys and Secrets (server-only)
+API_SECRET_KEY=your-secret-key-here
+JWT_SECRET=your-jwt-secret
+
+# Third-party API credentials
+STRIPE_SECRET_KEY=sk_test_...
+SENDGRID_API_KEY=SG....
+
+# OAuth credentials
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Other service credentials
+OPENAI_API_KEY=sk-...
+CLOUDFLARE_API_TOKEN=your-cf-api-token
+
+# Feature flags (server-only)
+ENABLE_EXPERIMENTAL_FEATURES=false
+DEBUG_MODE=true

@@ -140,6 +140,232 @@ await db.insert(posts).values({
 })
 ```
 
+## 🌍 Environment Variables
+
+This template includes a **unified environment variable utility** that works seamlessly across different runtime contexts:
+
+### Supported Environments
+
+- ✅ **Cloudflare Workers** - `context.env`, `cloudflare:workers`
+- ✅ **Vite** - `import.meta.env` (client + server)
+- ✅ **Node.js** - `process.env`
+- ✅ **Nitro/H3** - `event.context.cloudflare.env`
+- ✅ **TanStack Start** - Request context patterns
+
+### Configuration Files
+
+This template supports multiple environment file formats depending on your use case:
+
+#### Standard Environment Files
+
+Create these files in your project root for Vite and Node.js environments:
+
+```env
+# .env (shared across all environments)
+LIBSQL_URL=file:./db/app.db
+
+# .env.local (local overrides, gitignored)
+LIBSQL_AUTH_TOKEN=your-token
+
+# .env.production (production-specific)
+CLOUDFLARE_ACCOUNT_ID=your-account-id
+CLOUDFLARE_DATABASE_ID=your-db-id
+
+# Vite variables (VITE_* prefix exposed to client)
+VITE_API_URL=https://api.example.com
+VITE_APP_TITLE=My App
+```
+
+#### Cloudflare Workers Development (.dev.vars)
+
+For local Cloudflare Workers development with `wrangler dev`, use `.dev.vars`:
+
+```bash
+# .dev.vars (Cloudflare Workers local dev, gitignored)
+# This file simulates Cloudflare Workers environment bindings locally
+# Copy from .dev.vars.example
+
+# Database (remote Turso/libsql)
+LIBSQL_URL=libsql://your-database.turso.io
+LIBSQL_AUTH_TOKEN=your-auth-token
+
+# Server-only secrets (NOT accessible to client)
+API_SECRET_KEY=your-secret-key
+JWT_SECRET=your-jwt-secret
+STRIPE_SECRET_KEY=sk_test_...
+
+# Feature flags
+ENABLE_EXPERIMENTAL_FEATURES=false
+DEBUG_MODE=true
+```
+
+**Important:** `.dev.vars` is specifically for Wrangler local development and simulates the environment bindings you'll have in production Cloudflare Workers. Variables in `.dev.vars` are automatically available in your Workers context during local development.
+
+**Setup Steps:**
+1. Copy `.dev.vars.example` to `.dev.vars`
+2. Fill in your actual values
+3. Run `pnpm cf:dev` to start local development with these variables
+
+#### File Usage Matrix
+
+| File | Environment | Accessible From | Gitignored |
+|------|-------------|-----------------|------------|
+| `.env` | All (Vite, Node) | Server + Client (VITE_*) | ❌ |
+| `.env.local` | Local dev (Vite, Node) | Server + Client (VITE_*) | ✅ |
+| `.env.production` | Production build | Server + Client (VITE_*) | ❌ |
+| `.dev.vars` | Cloudflare Workers local dev | Server only | ✅ |
+| `wrangler.jsonc` vars | Cloudflare Workers | Server only | ❌ (no secrets!) |
+
+#### Production Cloudflare Workers Secrets
+
+For production deployments, use Wrangler's secret management (encrypted and not visible in dashboard):
+
+```bash
+# Set individual secrets for production
+echo "your-secret-value" | npx wrangler secret put API_SECRET_KEY
+echo "your-jwt-secret" | npx wrangler secret put JWT_SECRET
+echo "sk_live_..." | npx wrangler secret put STRIPE_SECRET_KEY
+
+# List all secrets (values are hidden)
+npx wrangler secret list
+
+# Delete a secret
+npx wrangler secret delete API_SECRET_KEY
+```
+
+**Best Practices:**
+- ✅ Use `.dev.vars` for local Cloudflare Workers development
+- ✅ Use `wrangler secret put` for production secrets
+- ✅ Use `wrangler.jsonc` vars section for non-sensitive config
+- ❌ Never commit `.dev.vars` to git
+- ❌ Never put secrets in `wrangler.jsonc`
+
+**Git Ignore Configuration:**
+All sensitive environment files are automatically ignored by git:
+```gitignore
+# All environment files are ignored
+.env
+.env.*              # Covers .env.local, .env.production, etc.
+.dev.vars
+
+# Except .example files (these should be committed)
+!.env.example
+!.dev.vars.example
+```
+
+### Usage Examples
+
+#### Server-Side (Full Access)
+
+```typescript
+import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
+import { getEnvVar } from '@/lib/env'
+
+export const getConfig = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const req = getRequest()
+    
+    // Access any environment variable
+    // Works with: .env, .dev.vars, wrangler secrets, process.env
+    const dbUrl = await getEnvVar('DATABASE_URL', req)
+    const apiKey = await getEnvVar('API_SECRET_KEY', req)
+    
+    return { dbUrl, hasApiKey: !!apiKey }
+  })
+```
+
+**How it works:**
+- In **Vite dev** (`pnpm dev`): Reads from `.env` and `.env.local`
+- In **Wrangler dev** (`pnpm cf:dev`): Reads from `.dev.vars` and Cloudflare context
+- In **Production**: Reads from Wrangler secrets and Cloudflare Workers environment
+
+#### Client-Side (VITE_* Only)
+
+```typescript
+import { getEnvVar } from '@/lib/env'
+
+function MyComponent() {
+  const [config, setConfig] = useState<any>()
+  
+  useEffect(() => {
+    // Only VITE_* prefixed variables work on client
+    Promise.all([
+      getEnvVar('VITE_API_URL'),
+      getEnvVar('VITE_APP_TITLE'),
+    ]).then(([apiUrl, title]) => {
+      setConfig({ apiUrl, title })
+    })
+  }, [])
+  
+  return <div>API: {config?.apiUrl}</div>
+}
+```
+
+#### Config Files (Synchronous)
+
+```typescript
+import { getEnvVarSync } from '@/lib/env'
+
+export const appConfig = {
+  apiUrl: getEnvVarSync('VITE_API_URL') || 'http://localhost:3000',
+  isDev: getEnvVarSync('DEV') === 'true',
+  mode: getEnvVarSync('MODE'),
+}
+```
+
+### Built-in Vite Constants
+
+Access Vite's built-in environment constants:
+
+```typescript
+import { getEnvVarSync } from '@/lib/env'
+
+const isDev = getEnvVarSync('DEV') === 'true'
+const isProd = getEnvVarSync('PROD') === 'true'
+const mode = getEnvVarSync('MODE') // 'development' | 'production'
+const baseUrl = getEnvVarSync('BASE_URL')
+const isSSR = getEnvVarSync('SSR') === 'true'
+```
+
+### Environment Resolution Priority
+
+Variables are resolved in this order (highest to lowest priority):
+
+1. **Cloudflare Workers context** - `context.env`, `context.cloudflare.env`
+2. **Vite import.meta.env** - Build-time replacements for `VITE_*` variables
+3. **Node.js process.env** - Traditional environment variables
+
+### Security Notes
+
+⚠️ **Important Security Guidelines:**
+
+- **Client-side exposure:** Only `VITE_*` prefixed variables are exposed to client code
+- **Server-only secrets:** Keep sensitive data (API keys, database credentials) WITHOUT the `VITE_*` prefix
+- **Gitignore sensitive files:** Add `.env.local` and `.env*.local` to `.gitignore`
+
+```env
+# ✅ Safe for client (VITE_* prefix)
+VITE_API_URL=https://api.example.com
+VITE_APP_VERSION=1.0.0
+
+# ❌ Server-only (no VITE_* prefix)
+DATABASE_URL=postgres://...
+API_SECRET_KEY=secret123
+CLOUDFLARE_API_TOKEN=token456
+```
+
+### API Reference
+
+| Function | Description | Usage |
+|----------|-------------|-------|
+| `getEnvVar(name, context?)` | Async method for runtime access | Server functions, async contexts |
+| `getEnvVarSync(name, context?)` | Synchronous method | Config files, sync contexts |
+| `getD1Binding(context?)` | Get Cloudflare D1 database binding | Cloudflare Workers |
+| `getCloudflareEnvBindings(context?)` | Get all Cloudflare env bindings | Advanced Cloudflare usage |
+
+For more examples, see `src/lib/env.example.ts`.
+
 ## 🗄️ Database Setup
 
 ### Local Development (SQLite)

@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   },
 })
 
-// 阻塞脚本，在 HTML 渲染前设置主题，防止闪烁
+// Blocking script to set theme before HTML rendering to prevent flashing
 const themeScript = `
 (function() {
   var theme = localStorage.getItem('theme');

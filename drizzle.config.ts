@@ -1,12 +1,14 @@
 import type { Config } from 'drizzle-kit';
+import { getEnvVarSync } from './src/lib/env';
 
 console.log('🔧 Drizzle configuration initializing...');
 
 // Check if we're in a Cloudflare environment by detecting D1 credentials
-const isCloudflareEnv =
-  process.env.CLOUDFLARE_ACCOUNT_ID &&
-  process.env.CLOUDFLARE_DATABASE_ID &&
-  process.env.CLOUDFLARE_API_TOKEN;
+const cloudflareAccountId = getEnvVarSync('CLOUDFLARE_ACCOUNT_ID');
+const cloudflareDatabaseId = getEnvVarSync('CLOUDFLARE_DATABASE_ID');
+const cloudflareApiToken = getEnvVarSync('CLOUDFLARE_API_TOKEN');
+
+const isCloudflareEnv = cloudflareAccountId && cloudflareDatabaseId && cloudflareApiToken;
 
 let config: Config;
 
@@ -19,16 +21,16 @@ if (isCloudflareEnv) {
     dialect: 'sqlite',
     driver: 'd1-http',
     dbCredentials: {
-      accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
-      databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
-      token: process.env.CLOUDFLARE_API_TOKEN!,
+      accountId: cloudflareAccountId!,
+      databaseId: cloudflareDatabaseId!,
+      token: cloudflareApiToken!,
     },
     tablesFilter: ['/^(?!.*_cf_KV).*$/'],
   };
   console.log('🌥️ Cloudflare D1 configuration loaded');
 } else {
   // Local development with libsql (for vite dev)
-  const dbUrl = process.env.LIBSQL_URL || 'file:./db/app.db';
+  const dbUrl = getEnvVarSync('LIBSQL_URL') || 'file:./db/app.db';
   console.log('🚀 Using local libsql via drizzle-kit libsql driver');
   config = {
     schema: './db/schema.ts',

@@ -14,15 +14,15 @@ export type NewUser = typeof users.$inferInsert
 export const getUsers = createServerFn({ method: 'GET' })
   .inputValidator((data: Record<string, never> = {}) => data)
   .handler(async ({ data }) => {
-    console.log('[getUsers] 开始执行，入参:', JSON.stringify(data, null, 2))
+    console.log('[getUsers] Starting execution, input params:', JSON.stringify(data, null, 2))
     
     const db = await getDb()
-    console.log('[getUsers] 数据库连接成功，db类型:', db.constructor.name)
+    console.log('[getUsers] Database connection successful, db type:', db.constructor.name)
     
-    console.log('[getUsers] 准备执行查询: select from users order by createdAt desc limit 10')
+    console.log('[getUsers] Preparing to execute query: select from users order by createdAt desc limit 10')
     const allUsers = await db.select().from(users).orderBy(desc(users.createdAt)).limit(10)
-    console.log('[getUsers] 查询成功，返回数据数量:', allUsers.length)
-    console.log('[getUsers] 查询结果:', JSON.stringify(allUsers, null, 2))
+    console.log('[getUsers] Query successful, returned data count:', allUsers.length)
+    console.log('[getUsers] Query result:', JSON.stringify(allUsers, null, 2))
 
     const result = {
       success: true,
@@ -30,7 +30,7 @@ export const getUsers = createServerFn({ method: 'GET' })
       count: allUsers.length,
       timestamp: new Date().toISOString(),
     }
-    console.log('[getUsers] 返回结果:', JSON.stringify(result, null, 2))
+    console.log('[getUsers] Return result:', JSON.stringify(result, null, 2))
     return result
   })
 
@@ -44,17 +44,17 @@ export const createUser = createServerFn({ method: 'POST' })
     return schema.parse(data)
   })
   .handler(async ({ data }) => {
-    console.log('[createUser] 开始执行，入参:', JSON.stringify(data, null, 2))
+    console.log('[createUser] Starting execution, input params:', JSON.stringify(data, null, 2))
     
     const db = await getDb()
-    console.log('[createUser] 数据库连接成功')
+    console.log('[createUser] Database connection successful')
 
     // Check if user already exists
-    console.log('[createUser] 检查用户是否已存在，email:', data.email)
+    console.log('[createUser] Checking if user already exists, email:', data.email)
     const existingUser = await db.select().from(users).where(eq(users.email, data.email))
-    console.log('[createUser] 已存在用户查询结果:', existingUser.length)
+    console.log('[createUser] Existing user query result:', existingUser.length)
     if (existingUser.length > 0) {
-      console.log('[createUser] 用户已存在，返回错误')
+      console.log('[createUser] User already exists, returning error')
       return {
         success: false,
         error: 'User with this email already exists',
@@ -67,13 +67,13 @@ export const createUser = createServerFn({ method: 'POST' })
       name: data.name || 'Anonymous',
       email: data.email,
     }
-    console.log('[createUser] 准备插入用户数据:', JSON.stringify(insertData, null, 2))
+    console.log('[createUser] Preparing to insert user data:', JSON.stringify(insertData, null, 2))
     await db.insert(users).values(insertData)
-    console.log('[createUser] 用户插入成功')
+    console.log('[createUser] User insertion successful')
 
     // Fetch the newly created user
     const newUser = await db.select().from(users).where(eq(users.email, data.email))
-    console.log('[createUser] 查询新创建的用户:', JSON.stringify(newUser, null, 2))
+    console.log('[createUser] Querying newly created user:', JSON.stringify(newUser, null, 2))
 
     const result = {
       success: true,
@@ -81,7 +81,7 @@ export const createUser = createServerFn({ method: 'POST' })
       message: 'User created successfully!',
       timestamp: new Date().toISOString(),
     }
-    console.log('[createUser] 返回结果:', JSON.stringify(result, null, 2))
+    console.log('[createUser] Return result:', JSON.stringify(result, null, 2))
     return result
   }
 )
@@ -97,10 +97,10 @@ export const updateUser = createServerFn({ method: 'POST' })
     return schema.parse(data)
   })
   .handler(async ({ data }) => {
-    console.log('[updateUser] 开始执行，入参:', JSON.stringify(data, null, 2))
+    console.log('[updateUser] Starting execution, input params:', JSON.stringify(data, null, 2))
     
     if (!data.userId) {
-      console.log('[updateUser] 缺少userId，返回错误')
+      console.log('[updateUser] Missing userId, returning error')
       return {
         success: false,
         error: 'User ID is required',
@@ -109,14 +109,14 @@ export const updateUser = createServerFn({ method: 'POST' })
     }
 
     const db = await getDb()
-    console.log('[updateUser] 数据库连接成功')
+    console.log('[updateUser] Database connection successful')
 
     // Check if user exists
-    console.log('[updateUser] 检查用户是否存在，userId:', data.userId)
+    console.log('[updateUser] Checking if user exists, userId:', data.userId)
     const existingUser = await db.select().from(users).where(eq(users.id, data.userId))
-    console.log('[updateUser] 用户查询结果:', existingUser.length)
+    console.log('[updateUser] User query result:', existingUser.length)
     if (existingUser.length === 0) {
-      console.log('[updateUser] 用户不存在，返回错误')
+      console.log('[updateUser] User does not exist, returning error')
       return {
         success: false,
         error: 'User not found',
@@ -130,15 +130,15 @@ export const updateUser = createServerFn({ method: 'POST' })
       email: data.email,
       updatedAt: new Date(),
     }
-    console.log('[updateUser] 准备更新用户数据:', JSON.stringify(updateData, null, 2))
+    console.log('[updateUser] Preparing to update user data:', JSON.stringify(updateData, null, 2))
     await db.update(users)
       .set(updateData)
       .where(eq(users.id, data.userId))
-    console.log('[updateUser] 用户更新成功')
+    console.log('[updateUser] User update successful')
 
     // Fetch updated user
     const updatedUser = await db.select().from(users).where(eq(users.id, data.userId))
-    console.log('[updateUser] 查询更新后的用户:', JSON.stringify(updatedUser, null, 2))
+    console.log('[updateUser] Querying updated user:', JSON.stringify(updatedUser, null, 2))
 
     const result = {
       success: true,
@@ -146,7 +146,7 @@ export const updateUser = createServerFn({ method: 'POST' })
       message: 'User updated successfully!',
       timestamp: new Date().toISOString(),
     }
-    console.log('[updateUser] 返回结果:', JSON.stringify(result, null, 2))
+    console.log('[updateUser] Return result:', JSON.stringify(result, null, 2))
     return result
   }
 )
@@ -160,10 +160,10 @@ export const deleteUser = createServerFn({ method: 'POST' })
     return schema.parse(data)
   })
   .handler(async ({ data }) => {
-    console.log('[deleteUser] 开始执行，入参:', JSON.stringify(data, null, 2))
+    console.log('[deleteUser] Starting execution, input params:', JSON.stringify(data, null, 2))
     
     if (!data.userId) {
-      console.log('[deleteUser] 缺少userId，返回错误')
+      console.log('[deleteUser] Missing userId, returning error')
       return {
         success: false,
         error: 'User ID is required',
@@ -172,18 +172,18 @@ export const deleteUser = createServerFn({ method: 'POST' })
     }
 
     const db = await getDb()
-    console.log('[deleteUser] 数据库连接成功')
+    console.log('[deleteUser] Database connection successful')
 
-    console.log('[deleteUser] 准备删除用户，userId:', data.userId)
+    console.log('[deleteUser] Preparing to delete user, userId:', data.userId)
     await db.delete(users).where(eq(users.id, data.userId))
-    console.log('[deleteUser] 用户删除成功')
+    console.log('[deleteUser] User deletion successful')
 
     const result = {
       success: true,
       message: 'User deleted successfully!',
       timestamp: new Date().toISOString(),
     }
-    console.log('[deleteUser] 返回结果:', JSON.stringify(result, null, 2))
+    console.log('[deleteUser] Return result:', JSON.stringify(result, null, 2))
     return result
   }
 )

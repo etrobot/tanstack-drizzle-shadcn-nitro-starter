@@ -2,30 +2,31 @@ import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type { LibSQLDatabase } from 'drizzle-orm/libsql'
 import type { D1Database } from '@cloudflare/workers-types'
 import { getRequest } from '@tanstack/react-start/server'
+import { getEnvVar, getD1Binding } from '../src/lib/env'
 
 type SupportedDatabase = DrizzleD1Database | LibSQLDatabase
 
 let dbInstance: SupportedDatabase | null = null
 let initPromise: Promise<SupportedDatabase> | null = null
 
-async function initLocalDb(): Promise<SupportedDatabase> {
-  console.log('[initLocalDb] 开始初始化本地数据库')
+async function initLocalDb(context?: any): Promise<SupportedDatabase> {
+  console.log('[initLocalDb] Starting to initialize local database')
   const { drizzle } = await import('drizzle-orm/libsql')
   const { createClient } = await import('@libsql/client')
 
-  const libsqlUrl = process.env.LIBSQL_URL || 'file:./db/app.db'
-  const libsqlAuthToken = process.env.LIBSQL_AUTH_TOKEN
-  console.log('[initLocalDb] 数据库URL:', libsqlUrl)
-  console.log('[initLocalDb] 是否有认证Token:', !!libsqlAuthToken)
+  const libsqlUrl = (await getEnvVar('LIBSQL_URL', context)) || 'file:./db/app.db'
+  const libsqlAuthToken = await getEnvVar('LIBSQL_AUTH_TOKEN', context)
+  console.log('[initLocalDb] Database URL:', libsqlUrl)
+  console.log('[initLocalDb] Has auth token:', !!libsqlAuthToken)
 
   const client = createClient({
     url: libsqlUrl,
     ...(libsqlAuthToken ? { authToken: libsqlAuthToken } : {}),
   })
-  console.log('[initLocalDb] libsql客户端创建成功')
+  console.log('[initLocalDb] libsql client created successfully')
   console.log(`✅ Initialized local database via libsql client (${libsqlUrl})`)
   const db = drizzle(client)
-  console.log('[initLocalDb] Drizzle实例创建成功')
+  console.log('[initLocalDb] Drizzle instance created successfully')
   return db
 }
 
@@ -41,53 +42,40 @@ export async function getDb(): Promise<SupportedDatabase> {
   if (!initPromise) {
     initPromise = (async () => {
       console.log(`🔧 Database connection initializing...`)
-      console.log('[getDb] 开始初始化数据库连接')
+      console.log('[getDb] Starting to initialize database connection')
 
-      // Try to find Cloudflare D1 binding
+      // Try to find Cloudflare D1 binding using unified env utility
       let d1Binding: D1Database | undefined
+      let requestContext: any
 
       try {
-        console.log('[getDb] 尝试获取请求对象')
-        const req = getRequest()
-        console.log('[getDb] 请求对象获取成功')
-        // Check various places where environment might be attached
-        const context = (req as any).context || (req as any).env
-        console.log('[getDb] 检查环境变量绑定')
-        // Nitro/H3/Vinxi pattern: event.context.cloudflare.env
-        // Or sometimes attached directly to request
-        d1Binding = (req as any).env?.DB || (req as any).DB || context?.cloudflare?.env?.DB || context?.env?.DB
-        console.log('[getDb] D1绑定检查结果:', !!d1Binding)
-
-        if (!d1Binding) {
-          console.log('[getDb] 尝试全局导入cloudflare:workers')
-          // Try global import as last resort
-          try {
-            // @ts-ignore
-            const cfWorkers = await import('cloudflare:workers')
-            d1Binding = (cfWorkers.env as any)?.DB
-            console.log('[getDb] cloudflare:workers导入成功，D1绑定:', !!d1Binding)
-          } catch (e) {
-            console.log('[getDb] cloudflare:workers导入失败:', e)
-          }
-        }
+        console.log('[getDb] Attempting to get request object')
+        requestContext = getRequest()
+        console.log('[getDb] Request object obtained successfully')
+        
+        // Use the unified env utility to get D1 binding
+        d1Binding = await getD1Binding(requestContext)
+        console.log('[getDb] D1 binding check result:', !!d1Binding)
       } catch (e) {
-        console.log('[getDb] 获取请求上下文失败:', e)
-        // Not in request context or import failed
+        console.log('[getDb] Failed to get request context:', e)
+        // Not in request context, try without context
+        d1Binding = await getD1Binding()
+        console.log('[getDb] D1 binding check result without context:', !!d1Binding)
       }
 
       if (d1Binding) {
         console.log('🚀 Using Cloudflare D1 database (detected)')
-        console.log('[getDb] 使用Cloudflare D1数据库')
+        console.log('[getDb] Using Cloudflare D1 database')
         const { drizzle } = await import('drizzle-orm/d1')
         dbInstance = drizzle(d1Binding)
-        console.log('[getDb] D1数据库实例创建成功')
+        console.log('[getDb] D1 database instance created successfully')
         return dbInstance
       }
 
       console.log('🚀 Using local libsql database connection')
-      console.log('[getDb] 使用本地libsql数据库连接')
-      dbInstance = await initLocalDb()
-      console.log('[getDb] 数据库初始化完成')
+      console.log('[getDb] Using local libsql database connection')
+      dbInstance = await initLocalDb(requestContext)
+      console.log('[getDb] Database initialization completed')
       return dbInstance
     })()
   }
